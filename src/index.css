@@ -1,0 +1,202 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');
+/* Import JetBrains Mono for monospace text */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom mobile optimizations */
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+  
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  
+  #root {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  /* Prevent pull-to-refresh */
+  body {
+    overscroll-behavior-y: contain;
+  }
+  
+  /* Hide scrollbars on mobile */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Prevent text selection on mobile */
+  * {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Allow text selection in input fields and content areas */
+  input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+}
+
+/* Monospace font classes */
+@layer utilities {
+  .font-mono-transcript {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: 0.025em;
+  }
+  
+  .font-mono-analysis {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-weight: 400;
+    line-height: 1.7;
+    letter-spacing: 0.025em;
+  }
+  
+  .font-mono-bold {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-weight: 600;
+  }
+}
+
+/* Full screen mobile support */
+@supports (height: 100dvh) {
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+  
+  .h-screen {
+    height: 100dvh;
+  }
+}
+
+/* Custom scrollbar for dark theme */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(71 85 105) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgb(71 85 105);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(100 116 139);
+  }
+}
+
+/* Animation enhancements */
+@keyframes wave {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.5); }
+}
+
+.animate-wave {
+  animation: wave 1.5s ease-in-out infinite;
+}
+
+/* Safe area support for mobile */
+@supports (padding: max(0px)) {
+  .safe-area-inset-top {
+    padding-top: max(1.5rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-inset-bottom {
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* PWA specific styles */
+@media (display-mode: fullscreen) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@media (display-mode: standalone) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Improve touch targets */
+button, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Prevent zoom on input focus for iOS */
+input[type="text"], 
+input[type="email"], 
+input[type="password"], 
+textarea {
+  font-size: 16px;
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Typing indicator animation */
+@keyframes typing {
+  0%, 20% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.typing-indicator span {
+  animation: typing 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
