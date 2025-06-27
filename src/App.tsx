@@ -97,13 +97,18 @@ function App() {
     setShowAnalysisPopup(true);
     
     try {
-      const result = await generateAnalysis(transcript);
-      setAnalysis(result);
+      const result = await generateAnalysis(transcript, partial => {
+        // stream partial tokens into state for live UI updates
+        setAnalysis(partial);
+      });
+      setAnalysis(result); // ensure final result stored
       saveToHistory(transcript, result);
       setSessionAnalyses(prev => [...prev, result]);
     } catch (error) {
       console.error('Analysis failed:', error);
-      setAnalysis('Sorry, I couldn\'t analyze the meeting transcript. Please check your OpenAI API key and try again.');
+      setAnalysis(
+        "Sorry, I couldn't analyze the meeting transcript. Please check your OpenAI API key and try again."
+      );
     } finally {
       setIsAnalyzing(false);
     }

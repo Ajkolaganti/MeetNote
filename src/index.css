@@ -227,3 +227,55 @@ textarea {
 .animate-pageEnter {
   animation: pageEnter 0.5s cubic-bezier(0.22,0.61,0.36,1) forwards;
 }
+
+@keyframes pingSlow {
+  0% { transform: scale(0.6); opacity:0.5; }
+  80%,100% { transform: scale(1.4); opacity:0; }
+}
+.animate-ping-slow {
+  animation: pingSlow 2s cubic-bezier(0.4,0,0.6,1) infinite;
+}
+
+@keyframes pingSlower {
+  0% { transform: scale(0.8); opacity:0.6; }
+  80%,100% { transform: scale(1.2); opacity:0; }
+}
+.animate-ping-slower {
+  animation: pingSlower 2.5s cubic-bezier(0.4,0,0.6,1) infinite;
+}
+
+@keyframes waveSlide {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-waveSlide {
+  animation: waveSlide 20s linear infinite;
+}
+
+@keyframes waveSlideReverse {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.animate-waveSlideReverse {
+  animation: waveSlideReverse 22s linear infinite;
+}
+
+@keyframes rotateSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-rotateSlow {
+  animation: rotateSlow 30s linear infinite;
+}
+
+@keyframes ringSpinPulse {
+  0% { transform: rotate(0deg) scale(1); opacity:1; }
+  50% { transform: rotate(180deg) scale(1.05); opacity:0.9; }
+  100% { transform: rotate(360deg) scale(1); opacity:1; }
+}
+.animate-ringSpinPulse {
+  animation: ringSpinPulse 30s linear infinite;
+}

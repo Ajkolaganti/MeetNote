@@ -58,15 +58,8 @@ export function AnalysisPopup({ analysis, isAnalyzing, onClose, onStartChat }: A
 
         {/* Content */}
         <div className="flex-1 p-6 overflow-y-auto scrollbar-thin">
-          {isAnalyzing ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <Loader2 className="w-12 h-12 mx-auto mb-4 text-emerald-400 animate-spin" />
-                <p className="text-slate-300 font-mono-transcript">Analyzing your meeting...</p>
-                <p className="text-sm text-slate-400 mt-2 font-mono-transcript">This may take a few moments</p>
-              </div>
-            </div>
-          ) : analysis ? (
+          {analysis ? (
+            <>
             <div className="prose prose-invert max-w-none">
               <div className="text-slate-100 font-mono-analysis text-sm leading-relaxed">
                 {analysis.split('\n').map((line, index) => {
@@ -133,6 +126,21 @@ export function AnalysisPopup({ analysis, isAnalyzing, onClose, onStartChat }: A
                   
                   return <br key={index} />;
                 })}
+              </div>
+            </div>
+            {isAnalyzing && (
+              <div className="flex items-center justify-center mt-6">
+                <Loader2 className="w-6 h-6 mr-2 text-emerald-400 animate-spin" />
+                <span className="text-slate-400 text-sm font-mono-transcript">Analyzing…</span>
+              </div>
+            )}
+            </>
+          ) : isAnalyzing ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <Loader2 className="w-12 h-12 mx-auto mb-4 text-emerald-400 animate-spin" />
+                <p className="text-slate-300 font-mono-transcript">Analyzing your meeting...</p>
+                <p className="text-sm text-slate-400 mt-2 font-mono-transcript">This may take a few moments</p>
               </div>
             </div>
           ) : (
