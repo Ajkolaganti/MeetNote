@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { createClient, LiveTranscriptionEvents } from '@deepgram/sdk';
 
 // Use the browser's built-in Web Speech API as a fallback
 export function useDeepgramRecording() {
@@ -9,10 +10,11 @@ export function useDeepgramRecording() {
   const [error, setError] = useState<string | null>(null);
   
   const streamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const deepgramConnectionRef = useRef<any>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number>();
-  const recognitionRef = useRef<any>(null);
   const fullTranscriptRef = useRef<string>('');
 
   const updateAudioLevel = useCallback(() => {
@@ -28,19 +30,25 @@ export function useDeepgramRecording() {
   }, []);
 
   const cleanup = useCallback(() => {
-    // Stop speech recognition
-    if (recognitionRef.current) {
+    // Stop media-recorder
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    mediaRecorderRef.current = null;
+
+    // Close Deepgram socket
+    if (deepgramConnectionRef.current) {
       try {
-        recognitionRef.current.stop();
-      } catch (e) {
-        console.warn('Error stopping speech recognition:', e);
+        deepgramConnectionRef.current.close();
+      } catch {
+        // ignore
       }
-      recognitionRef.current = null;
+      deepgramConnectionRef.current = null;
     }
 
-    // Stop media stream
+    // Stop mic tracks
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
 
@@ -50,12 +58,10 @@ export function useDeepgramRecording() {
       audioContextRef.current = null;
     }
 
-    // Stop animation frame
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = undefined;
     }
-
-    // Reset refs
     analyserRef.current = null;
   }, []);
 
@@ -63,139 +69,96 @@ export function useDeepgramRecording() {
     try {
       setError(null);
       setConnectionStatus('connecting');
-      
-      // Check if Web Speech API is available
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      
-      if (!SpeechRecognition) {
-        throw new Error('Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
-      }
 
-      // Get microphone stream for audio level visualization
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      // 1. Validate API key
+      const apiKey = import.meta.env.VITE_DEEPGRAM_API_KEY;
+      if (!apiKey) {
+        throw new Error('Deepgram API key not found. Add VITE_DEEPGRAM_API_KEY to your .env');
+      }
+      const deepgram = createClient(apiKey);
+
+      // 2. Ask for microphone
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-          sampleRate: 16000,
-          channelCount: 1
-        } 
+          channelCount: 1,
+          sampleRate: 48000
+        }
       });
-      
       streamRef.current = stream;
 
-      // Set up audio analysis for visual feedback
+      // 3. Set up audio-level analyser (visual only)
       const audioContext = new AudioContext();
       const analyser = audioContext.createAnalyser();
-      const source = audioContext.createMediaStreamSource(stream);
-      
       analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.3;
-      source.connect(analyser);
-      
+      audioContext.createMediaStreamSource(stream).connect(analyser);
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
-      
       updateAudioLevel();
 
-      // Set up Web Speech API
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
-      recognition.maxAlternatives = 1;
+      // 4. Open Deepgram live connection
+      const dgConnection = deepgram.listen.live({
+        model: 'nova-3',
+        language: 'en-US',
+        smart_format: true,
+        interim_results: true,
+        // Deepgram will auto-detect containerised WebM/Opus; omit encoding/sample_rate
+      });
+      deepgramConnectionRef.current = dgConnection;
 
-      recognitionRef.current = recognition;
-      fullTranscriptRef.current = '';
-      setLiveTranscript('');
-
-      recognition.onstart = () => {
-        console.log('Speech recognition started');
+      dgConnection.on(LiveTranscriptionEvents.Open, () => {
+        console.log('🔊 Deepgram socket opened');
         setConnectionStatus('connected');
         setIsRecording(true);
-        setError(null);
-      };
 
-      recognition.onresult = (event: any) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
+        // Start MediaRecorder only after websocket is ready
+        const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        mediaRecorderRef.current = recorder;
 
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript + ' ';
-          } else {
-            interimTranscript += transcript;
+        recorder.addEventListener('dataavailable', async (evt) => {
+          if (evt.data && evt.data.size > 0 && deepgramConnectionRef.current) {
+            const buf = await evt.data.arrayBuffer();
+            deepgramConnectionRef.current.send(buf);
           }
-        }
+        });
 
-        if (finalTranscript) {
-          fullTranscriptRef.current += finalTranscript;
-          console.log('Final transcript:', finalTranscript);
-        }
+        recorder.start(250); // emit chunks every 250 ms
+      });
 
-        // Update display with both final and interim results
-        const displayText = fullTranscriptRef.current + interimTranscript;
-        setLiveTranscript(displayText);
-      };
+      dgConnection.on(LiveTranscriptionEvents.Transcript, (payload: any) => {
+        const alt = payload?.channel?.alternatives?.[0];
+        if (!alt?.transcript) return;
 
-      recognition.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
-        
-        let errorMessage = 'Speech recognition error';
-        switch (event.error) {
-          case 'network':
-            errorMessage = 'Network error. Please check your internet connection.';
-            break;
-          case 'not-allowed':
-            errorMessage = 'Microphone access denied. Please allow microphone permissions.';
-            break;
-          case 'no-speech':
-            errorMessage = 'No speech detected. Please try speaking louder.';
-            break;
-          case 'audio-capture':
-            errorMessage = 'Audio capture failed. Please check your microphone.';
-            break;
-          case 'service-not-allowed':
-            errorMessage = 'Speech service not allowed. Please try again.';
-            break;
-          default:
-            errorMessage = `Speech recognition error: ${event.error}`;
+        if (payload.is_final) {
+          fullTranscriptRef.current += alt.transcript + ' ';
         }
-        
-        setError(errorMessage);
+        const interim = payload.is_final ? '' : alt.transcript;
+        setLiveTranscript(fullTranscriptRef.current + interim);
+      });
+
+      dgConnection.on(LiveTranscriptionEvents.Error, (err: any) => {
+        console.error('Deepgram error', err);
+        setError('Deepgram error: ' + (err?.message || 'unknown'));
         setConnectionStatus('error');
-      };
+        cleanup();
+      });
 
-      recognition.onend = () => {
-        console.log('Speech recognition ended');
-        if (isRecording) {
-          // Restart recognition if we're still supposed to be recording
-          try {
-            recognition.start();
-          } catch (e) {
-            console.warn('Could not restart recognition:', e);
-            setConnectionStatus('disconnected');
-            setIsRecording(false);
-          }
-        } else {
-          setConnectionStatus('disconnected');
-        }
-      };
-
-      // Start recognition
-      recognition.start();
-
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to start recording';
-      setError(errorMessage);
+      dgConnection.on(LiveTranscriptionEvents.Close, () => {
+        console.log('Deepgram socket closed');
+        setConnectionStatus('disconnected');
+        setIsRecording(false);
+      });
+    } catch (e: any) {
+      console.error('Failed to start recording', e);
+      setError(e?.message || 'Failed to start recording');
       setConnectionStatus('error');
       cleanup();
-      throw error;
+      throw e;
     }
-  }, [updateAudioLevel, cleanup, isRecording]);
+  }, [cleanup, updateAudioLevel]);
 
   const stopRecording = useCallback(() => {
     setIsRecording(false);

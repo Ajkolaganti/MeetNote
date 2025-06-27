@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, MicOff, Send, MessageCircle, BookOpen } from 'lucide-react';
+import { Mic, MicOff, Send, MessageCircle, BookOpen, History } from 'lucide-react';
 import { Header } from './components/Header';
 import { WaveAnimation } from './components/WaveAnimation';
 import { TranscriptDisplay } from './components/TranscriptDisplay';
@@ -8,6 +8,7 @@ import { ChatPopup } from './components/ChatPopup';
 import { useDeepgramRecording } from './hooks/useDeepgramRecording';
 import { useOpenAI } from './hooks/useOpenAI';
 import { HistoryPopup } from './components/HistoryPopup';
+import { MeetingHistoryPopup } from './components/MeetingHistoryPopup';
 
 interface Message {
   id: string;
@@ -35,6 +36,7 @@ function App() {
   const [showHistoryPopup, setShowHistoryPopup] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [sessionId] = useState(() => Date.now().toString());
+  const [showHomeHistoryPopup, setShowHomeHistoryPopup] = useState(false);
 
   // Load meeting history from localStorage
   const [history, setHistory] = useState<HistoryItem[]>(() => {
@@ -77,6 +79,7 @@ function App() {
       await startRecording();
       setCurrentView('recording');
       setTranscript('');
+      setChatMessages([]);
     } catch (error) {
       console.error('Failed to start recording:', error);
       alert('Failed to start recording. Please check your microphone permissions.');
@@ -180,6 +183,9 @@ function App() {
     setShowHistoryPopup(false);
   };
 
+  const handleOpenHomeHistory = () => setShowHomeHistoryPopup(true);
+  const handleCloseHomeHistory = () => setShowHomeHistoryPopup(false);
+
   if (currentView === 'home') {
     return (
       <div key="home" className="min-h-screen bg-neutral-950 text-white overflow-hidden">
@@ -210,8 +216,18 @@ function App() {
             <p className="mt-6 text-sm text-neutral-400 font-mono-transcript animate-slideUp">
               Tap the mic to start live transcription and analysis
             </p>
+
+            <button
+              onClick={handleOpenHomeHistory}
+              className="fixed bottom-6 right-6 w-12 h-12 bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center transition-colors border border-slate-600"
+            >
+              <History className="w-6 h-6 text-slate-300" />
+            </button>
           </div>
         </div>
+        {showHomeHistoryPopup && (
+          <MeetingHistoryPopup history={history} onClose={handleCloseHomeHistory} />
+        )}
       </div>
     );
   }

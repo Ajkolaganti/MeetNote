@@ -84,34 +84,43 @@ Return the analysis in markdown with these sections:
       analysis: string,
       onToken?: (partial: string) => void
     ): Promise<string> => {
-      // ---------- NEW EARLY GUARDS ----------
+      // ---------- EARLY GUARDS ----------
       if (!transcript?.trim()) {
-        return '❌ I dont have any meeting transcript yet, so I cant answer that question.';
+        return '❌ I don’t have any meeting transcript yet, so I can’t answer that question.';
       }
       if (!analysis?.trim()) {
-        return '❌ A meeting analysis hasnt been generated yet. Please run the analysis first.';
+        return '❌ A meeting analysis hasn’t been generated yet. Please run the analysis first.';
       }
-      // ---------------------------------------
-
+      // -----------------------------------
+  
       const openai = getOpenAIClient();
-
+  
+      /* ---------- UPDATED CONTEXT PROMPT ---------- */
       const contextPrompt = `You are an AI assistant answering follow-up questions about a meeting.
-
-MEETING TRANSCRIPT:
-${transcript}
-
-PREVIOUS ANALYSIS:
-${analysis}
-
-USER QUESTION:
-${message}
-
-STRICT RULES:
-• Answer **only** with information that appears in the transcript or analysis.  
-• If the answer cannot be found there, reply:  
-  "❌ Sorry, that information was not discussed in the meeting."  
-• Do **not** fabricate or guess.`;
-
+  
+  MEETING TRANSCRIPT:
+  ${transcript}
+  
+  PREVIOUS ANALYSIS:
+  ${analysis}
+  
+  USER QUESTION:
+  ${message}
+  
+  STRICT RULES
+  • Rely **only** on the information above.  
+  • If the answer cannot be found there, reply:
+    "❌ Sorry, that information was not discussed in the meeting."  
+  • **Do not fabricate or guess.**
+  
+  SPECIAL CASE – SUGGESTING CLARIFYING QUESTIONS  
+  If the user asks _what questions they can ask to get more clarity_ (phrases like “What should I ask…”, “Any questions I can ask…”, “How can I get more clarity?”):  
+  1. Produce a concise, numbered list (5-10 items) of thoughtful, specific questions that directly reference the meeting topics.  
+  2. Do NOT include answers to those questions—just the questions themselves.  
+  3. Keep each question short, clear, and actionable.  
+  4. Do not mention anything outside the meeting context.`;
+      /* ---------- END UPDATED PROMPT ---------- */
+  
       try {
         const completion = await openai.chat.completions.create({
           model: 'gpt-4o-mini',
@@ -120,7 +129,7 @@ STRICT RULES:
               role: 'system',
               content:
                 'You are a helpful assistant who must answer strictly from the provided meeting context. ' +
-                'If the context is missing or does not contain the answer, politely refuse.'
+                'If context is missing or does not contain the answer, politely refuse.'
             },
             { role: 'user', content: contextPrompt }
           ],
@@ -128,16 +137,14 @@ STRICT RULES:
           temperature: 0.3,
           stream: true
         });
-
+  
         let content = '';
         for await (const chunk of completion) {
           const delta = chunk.choices[0]?.delta?.content || '';
           if (!delta) continue;
-
+  
           content += delta;
-          if (onToken) {
-            onToken(content);
-          }
+          if (onToken) onToken(content);
         }
         return (
           content || '❌ Sorry, that information was not discussed in the meeting.'
@@ -149,6 +156,6 @@ STRICT RULES:
     },
     [getOpenAIClient]
   );
-
+  
   return { generateAnalysis, sendChatMessage };
 }
