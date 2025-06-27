@@ -177,7 +177,7 @@ function App() {
 
   if (currentView === 'home') {
     return (
-      <div className="min-h-screen bg-neutral-950 text-white overflow-hidden">
+      <div key="home" className="min-h-screen bg-neutral-950 text-white overflow-hidden">
         <div className="relative min-h-screen flex flex-col">
           <Header />
           
@@ -193,21 +193,18 @@ function App() {
             
             <WaveAnimation />
             
-            <div className="mt-16 space-y-4">
-              <button
-                onClick={handleStartRecording}
-                aria-label="Start Meeting Assistant"
-                className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 rounded-full flex items-center justify-center shadow-xl ring-4 ring-emerald-500/30 transition-all duration-300 transform hover:scale-105 active:scale-95"
-              >
-                <Mic className="w-8 h-8" />
-              </button>
-              
-              <div className="text-center">
-                <p className="text-sm text-slate-400 font-mono-transcript">
-                  Tap the mic to start live transcription and analysis
-                </p>
-              </div>
-            </div>
+            {/* Mic Button below the waveform */}
+            <button
+              onClick={handleStartRecording}
+              aria-label="Start Meeting Assistant"
+              className="mt-16 w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 rounded-full flex items-center justify-center shadow-2xl ring-4 ring-emerald-500/30 transition-all duration-300 transform hover:scale-110 active:scale-95 animate-fadeIn"
+            >
+              <Mic className="w-9 h-9" />
+            </button>
+            
+            <p className="mt-6 text-sm text-neutral-400 font-mono-transcript animate-slideUp">
+              Tap the mic to start live transcription and analysis
+            </p>
           </div>
         </div>
       </div>
@@ -216,7 +213,7 @@ function App() {
 
   if (currentView === 'recording') {
     return (
-      <div className="min-h-screen bg-neutral-950 text-white">
+      <div key="recording" className="min-h-screen bg-neutral-950 text-white animate-pageEnter">
         <div className="flex flex-col h-screen">
           <Header onBack={handleBackToHome} />
           

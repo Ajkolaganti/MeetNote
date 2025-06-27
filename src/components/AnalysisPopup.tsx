@@ -40,7 +40,7 @@ export function AnalysisPopup({ analysis, isAnalyzing, onClose, onStartChat }: A
       />
       
       {/* Popup Content */}
-      <div className="relative w-full max-w-4xl mx-4 mb-4 md:mb-0 bg-neutral-950/95 backdrop-blur-lg rounded-t-3xl md:rounded-3xl border border-neutral-800/50 shadow-2xl max-h-[85vh] flex flex-col">
+      <div className="relative w-full max-w-4xl mx-4 mb-4 md:mb-0 bg-neutral-950/95 backdrop-blur-lg rounded-t-3xl md:rounded-3xl border border-neutral-800/50 shadow-2xl max-h-[85vh] flex flex-col animate-slideUp">
         {/* Header */}
         <div className="flex items-center justify-between p-6 pb-4 border-b border-neutral-800/50">
           <div className="flex items-center gap-3">
