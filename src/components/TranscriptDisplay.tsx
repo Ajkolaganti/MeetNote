@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Volume2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Volume2, Copy, Check } from 'lucide-react';
 
 interface TranscriptDisplayProps {
   transcript: string;
@@ -9,6 +9,15 @@ interface TranscriptDisplayProps {
 
 export function TranscriptDisplay({ transcript, isRecording, audioLevel }: TranscriptDisplayProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (!transcript) return;
+    navigator.clipboard.writeText(transcript).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -21,15 +30,29 @@ export function TranscriptDisplay({ transcript, isRecording, audioLevel }: Trans
       <div className="flex items-center gap-3 mb-4">
         <Volume2 className="w-5 h-5 text-emerald-400" />
         <span className="text-sm text-slate-300 font-mono-bold">Live Transcript</span>
-        
+
+        {/* Copy button */}
+        <button
+          onClick={handleCopy}
+          title={copied ? 'Copied!' : 'Copy transcript'}
+          className="ml-2 p-1.5 rounded-full hover:bg-white/10 transition-colors"
+          disabled={!transcript}
+        >
+          {copied ? (
+            <Check className="w-4 h-4 text-emerald-400 animate-ping-slow" />
+          ) : (
+            <Copy className="w-4 h-4 text-slate-300" />
+          )}
+        </button>
+
         {/* Audio level indicator */}
         <div className="flex-1 flex items-center gap-1">
           {Array.from({ length: 20 }).map((_, i) => (
             <div
               key={i}
               className={`w-1 h-4 rounded-full transition-colors ${
-                i < audioLevel * 20 
-                  ? 'bg-emerald-400' 
+                i < audioLevel * 20
+                  ? 'bg-emerald-400'
                   : 'bg-slate-700'
               }`}
             />
@@ -37,7 +60,7 @@ export function TranscriptDisplay({ transcript, isRecording, audioLevel }: Trans
         </div>
       </div>
 
-      <div 
+      <div
         ref={scrollRef}
         className="flex-1 bg-neutral-900/60 rounded-2xl p-6 overflow-y-auto border border-neutral-800/50 backdrop-blur-sm scrollbar-thin min-h-0"
         style={{ maxHeight: 'calc(100vh - 300px)' }}
@@ -47,7 +70,7 @@ export function TranscriptDisplay({ transcript, isRecording, audioLevel }: Trans
             <div className="text-slate-100 leading-relaxed whitespace-pre-wrap font-mono-transcript text-base">
               {transcript}
             </div>
-            
+
             {isRecording && (
               <div className="flex items-center gap-2 text-emerald-400">
                 <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>

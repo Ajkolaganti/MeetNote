@@ -23,12 +23,18 @@ export function useAudioRecording() {
 
   const startRecording = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      // Request microphone without forcing a fixed sampleRate so that
+      // browsers can choose the most compatible settings for the currently
+      // selected input device (e.g. built-in mic, wired headset, or Bluetooth
+      // hands-free profile). For some Bluetooth devices, forcing an
+      // unsupported sample-rate can cause the media stream to fail silently
+      // which leads to missing audio in the live transcript.
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          sampleRate: 16000
-        } 
+          autoGainControl: true
+        }
       });
       
       streamRef.current = stream;

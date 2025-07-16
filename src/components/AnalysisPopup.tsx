@@ -1,5 +1,5 @@
-import React from 'react';
-import { MessageCircle, Loader2, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { MessageCircle, Loader2, X, Copy, Check } from 'lucide-react';
 
 interface AnalysisPopupProps {
   analysis: string;
@@ -31,6 +31,16 @@ export function AnalysisPopup({ analysis, isAnalyzing, onClose, onStartChat }: A
       .join('\n');
   };
 
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (!analysis) return;
+    navigator.clipboard.writeText(analysis).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       {/* Backdrop */}
@@ -47,13 +57,29 @@ export function AnalysisPopup({ analysis, isAnalyzing, onClose, onStartChat }: A
             <img src="/bot.png" alt="Bot" className="w-6 h-6" />
             <h2 className="text-xl font-medium font-mono-bold">AI Analysis</h2>
           </div>
-          
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-800 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+
+          <div className="flex items-center gap-2">
+            {/* Copy button */}
+            <button
+              onClick={handleCopy}
+              title={copied ? 'Copied!' : 'Copy analysis'}
+              className="p-2 rounded-full hover:bg-slate-800 transition-colors disabled:opacity-50"
+              disabled={!analysis}
+            >
+              {copied ? (
+                <Check className="w-5 h-5 text-emerald-400 animate-ping-slow" />
+              ) : (
+                <Copy className="w-5 h-5" />
+              )}
+            </button>
+
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full hover:bg-slate-800 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}

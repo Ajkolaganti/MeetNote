@@ -78,13 +78,16 @@ export function useDeepgramRecording() {
       const deepgram = createClient(apiKey);
 
       // 2. Ask for microphone
+      // Request microphone without forcing a sampleRate. Some Bluetooth
+      // headsets only support 8-16 kHz in hands-free mode; forcing 48 kHz can
+      // result in a muted track or getUserMedia rejection. Let the browser
+      // negotiate the best settings instead.
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-          channelCount: 1,
-          sampleRate: 48000
+          channelCount: 1
         }
       });
       streamRef.current = stream;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Copy, Check } from 'lucide-react';
 
 interface HistoryItem {
   id: string;
@@ -21,6 +21,16 @@ export function MeetingHistoryPopup({ history, onClose }: MeetingHistoryPopupPro
   };
 
   const getActive = (id: string) => activeTabById[id] || 'transcript';
+
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const handleCopy = (key: string, content: string) => {
+    if (!content) return;
+    navigator.clipboard.writeText(content).then(() => {
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey((prev) => (prev === key ? null : prev)), 2000);
+    });
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
@@ -59,8 +69,8 @@ export function MeetingHistoryPopup({ history, onClose }: MeetingHistoryPopupPro
                       </span>
                     </div>
 
-                    {/* Tabs */}
-                    <div className="flex gap-3 mt-2">
+                    {/* Tabs & copy */}
+                    <div className="flex gap-3 mt-2 items-center">
                       {(['transcript', 'analysis'] as const).map((tab) => (
                         <button
                           key={tab}
@@ -72,6 +82,20 @@ export function MeetingHistoryPopup({ history, onClose }: MeetingHistoryPopupPro
                           {tab === 'transcript' ? 'Transcript' : 'Analysis'}
                         </button>
                       ))}
+
+                      {/* Copy button */}
+                      <button
+                        onClick={() => handleCopy(`${item.id}-${active}`, active === 'transcript' ? item.transcript : item.analysis)}
+                        title={copiedKey === `${item.id}-${active}` ? 'Copied!' : 'Copy'}
+                        className="ml-2 p-1.5 rounded-full hover:bg-white/10 transition-colors disabled:opacity-50"
+                        disabled={!(active === 'transcript' ? item.transcript : item.analysis)}
+                      >
+                        {copiedKey === `${item.id}-${active}` ? (
+                          <Check className="w-4 h-4 text-emerald-400 animate-ping-slow" />
+                        ) : (
+                          <Copy className="w-4 h-4 text-slate-300" />
+                        )}
+                      </button>
                     </div>
 
                     {/* Panel */}

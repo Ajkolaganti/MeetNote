@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Mic, MicOff, Send, MessageCircle, BookOpen, History } from 'lucide-react';
 import { Header } from './components/Header';
-import { WaveAnimation } from './components/WaveAnimation';
 import { TranscriptDisplay } from './components/TranscriptDisplay';
 import { AnalysisPopup } from './components/AnalysisPopup';
 import { ChatPopup } from './components/ChatPopup';
@@ -129,13 +128,15 @@ function App() {
     
     try {
       const response = await sendChatMessage(message, transcript, analysis);
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: response,
-        timestamp: new Date()
-      };
-      setChatMessages(prev => [...prev, assistantMessage]);
+      if (response.trim()) {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'assistant',
+          content: response,
+          timestamp: new Date()
+        };
+        setChatMessages(prev => [...prev, assistantMessage]);
+      }
     } catch (error) {
       console.error('Chat message failed:', error);
       const errorMessage: Message = {
@@ -202,7 +203,7 @@ function App() {
               </p>
             </div>
             
-            <WaveAnimation />
+            {/* Removed WaveAnimation background as per user request */}
             
             {/* Mic Button below the waveform */}
             <button

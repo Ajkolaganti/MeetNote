@@ -109,8 +109,7 @@ Return the analysis in markdown with these sections:
   
   STRICT RULES
   • Rely **only** on the information above.  
-  • If the answer cannot be found there, reply:
-    "❌ Sorry, that information was not discussed in the meeting."  
+  • If the answer cannot be found there, respond briefly that the information is unavailable and suggest the user clarify or rephrase their question.  
   • **Do not fabricate or guess.**
   
   SPECIAL CASE – SUGGESTING CLARIFYING QUESTIONS  
@@ -146,9 +145,7 @@ Return the analysis in markdown with these sections:
           content += delta;
           if (onToken) onToken(content);
         }
-        return (
-          content || '❌ Sorry, that information was not discussed in the meeting.'
-        );
+        return content;
       } catch (error) {
         console.error('OpenAI chat error:', error);
         throw new Error('Failed to send chat message.');
